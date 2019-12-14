@@ -17,8 +17,14 @@ class ExcelGenerateTest extends TestCase
     /** @test */
     public function generateExcel() 
     {
-        $response = $this->post('/generateExcel'.[]);
-        $response->assertStatus(200);
+        // $response = $this->post('/generateExcel'.[]);
+        // $response->assertStatus(200);
+
+        $books = factory('App\Book', 5)->create();
+
+        $response = $this->actingAs($books->first())->get('/generateExcel');
+        $content = $response->streamedContent();
+        // dd($content);
 
     }
     

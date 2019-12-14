@@ -1,17 +1,32 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Controllers\Auth;
 
+use Auth;
+use App\User;
 use Tests\TestCase;
 
-class LoginTest extends TestCase
+class LoginControllerTest extends TestCase
 {
+
+    /**
+     * Test For Get Login Page.
+     *
+     * @return void
+     */
     /** @test */
+    public function testGetLoginPage()
+    {
+        $response = $this->call('GET', '/login');
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
     /**
      * Test Post Method While Log In.
      *
      * @return void
      */
+    /** @test */
     public function testLoginPost()
     {
         $response = $this->call('POST', '/login', [
@@ -19,6 +34,7 @@ class LoginTest extends TestCase
             'password' => 'adminadmin',
             '_token' => csrf_token()
         ]);
+
         $this->assertEquals(302, $response->getStatusCode());
         $response->assertRedirect('/home');
     }
@@ -30,6 +46,7 @@ class LoginTest extends TestCase
      */
     public function testLoginFalse()
     {
+
         $response = $this->post('/login', [
             'email' => 'user@ad.com',
             'password' => 'incorrectpass',
@@ -48,8 +65,11 @@ class LoginTest extends TestCase
 
         $response = $this->post('/login', [
             'email' => 'admin@gmail.com',
-            'password' => 'adminadmin',
+            'password' => 'adminadmin'          
         ]);
+    
         $response->assertRedirect('/home');
+        $response->assertStatus(302);
+        $this->assertTrue(Auth::check());
     }
 }

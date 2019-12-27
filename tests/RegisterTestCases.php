@@ -1,27 +1,51 @@
 <?php
 
-namespace Tests\testcase;
+namespace Tests\Controllers\Auth;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\Validator;
-use \Mockery;
+use Mockery;
 use App\Http\Controllers\Auth\RegisterController;
+use Tests\DuskTestCase;
+use App\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class RegisterTestCases extends TestCase
+class RegisterTestCases extends DuskTestCase
 {
-    use WithFaker;
+    use WithFaker,RefreshDatabase;
 
-    /** @test */
+    public $mockUser;
+    public $mockValidator;
+    public $mockLoginController;
+
     /**
-     * Test For Get Sign Up URL from route.
-     *
-     * @return void
+     * Setup test environment
      */
-    public function testRegisterUrl()
+    public function setUp(): void
     {
-        $response = $this->get('/register');
-        $response->assertStatus(200);
+        parent::setUp();
+
+        $this->mockValidator = $this->app['validator'];
+        $this->mockUser = Mockery::mock(User::class)->makePartial();
+        $this->mockRegisterController = Mockery::mock(RegisterController::class)->makePartial();
+    }
+
+    /**
+     * Clear test environment before start test
+     */
+    public function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
+    /**
+     * Check Register route exist.
+     *
+     * @test
+     */
+    public function test_register_route_is_exist()
+    {
+        $response = $this->call('GET', '/register');
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     /**
@@ -42,10 +66,7 @@ class RegisterTestCases extends TestCase
 
         //check if methods are exists or not
         foreach ($methodsToCheck as $method) {
-            $this->assertTrue(
-                method_exists($this->mockRegisterController, $method),
-                get_class($this->mockRegisterController) . ' does not have method ' . $method
-            );
+            $this->checkMethodExist($this->mockRegisterController, $method);
         }
     }
 
@@ -75,8 +96,68 @@ class RegisterTestCases extends TestCase
         ];
 
         //validate request data
-        $v = Validator::make($data, $rules);
-        $this->assertTrue($v->passes());
+        $validate = $this->mockValidator->make($data, $rules);
+        $this->assertTrue($validate->passes());
+    }
+
+    /**
+     * Check Email id exist in the system.
+     *
+     * @test
+     */
+//    public function test_email_exists_in_system()
+//    {
+//        $this->assertDatabaseHas('users', [
+//            'email' => 'hiral@admin.com'
+//        ]);
+//    }
+
+    /**
+     * Check if email id not exist in the system.
+     *
+     * @test
+     */
+    public function test_email_not_exists_in_system()
+    {
+        $this->assertDatabaseMissing('users', [
+            'email' => 'notexistemail@gmail.com'
+        ]);
+    }
+
+    /**
+     * Check if password and confirmPassword not match.
+     *
+     * @test
+     */
+    public function test_password_not_match_with_confirm_password()
+    {
+        $password = $this->faker->password();
+        $confirmPassword = $this->faker->password();
+
+        $this->assertNotEquals($password, $confirmPassword);
+    }
+
+    /**
+     * Check if Password and confirm password are match.
+     *
+     * @test
+     */
+    public function test_password_match_with_confirm_password()
+    {
+        $password = $this->faker->password();
+        $confirmPassword = $password;
+
+        $this->assertEquals($password, $confirmPassword);
+    }
+
+    /**
+     * Check if name is string or not.
+     *
+     * @test
+     */
+    public function test_name_is_string()
+    {
+        $this->assertIsString($this->faker->name());
     }
 
     /**
